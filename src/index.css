@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Estilos globais customizados para a interface mobile */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #f9fafb; /* bg-gray-50 do Tailwind */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
