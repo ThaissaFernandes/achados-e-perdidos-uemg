@@ -1,6 +1,6 @@
 Markdown
 
-# FindIT — Sistema de Achados e Perdidos
+# FindIT UEMG — Sistema de Achados e Perdidos
 
 
 
@@ -20,7 +20,7 @@ Markdown
 
 
 
-O **FindIT** é uma aplicação web mobile projetada para otimizar o fluxo de devolução e recuperação de pertences perdidos no campus da UEMG Divinópolis. O foco central da pesquisa reside na aplicação rigorosa de diretrizes de **Interação Humano-Computador (IHC)**, **Usabilidade** e nas **Heurísticas de Nielsen**, visando minimizar a carga cognitiva dos usuários e entregar uma navegação intuitiva.
+O **FindIT UEMG** é uma aplicação web mobile projetada para otimizar o fluxo de devolução e recuperação de pertences perdidos no campus da UEMG Divinópolis. O foco central da pesquisa reside na aplicação rigorosa de diretrizes de **Interação Humano-Computador (IHC)**, **Usabilidade** e nas **Heurísticas de Nielsen**, visando minimizar a carga cognitiva dos usuários e entregar uma navegação intuitiva.
 
 
 
