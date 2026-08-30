@@ -1,45 +1,74 @@
-import { useState } from 'react';
-import { Search, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Loader2 } from 'lucide-react';
 import ItemCard from '../components/ItemCard';
-
-// Dados simulados para estruturar a interface visual
-const MOCK_ITEMS = [
-  {
-    id: 1,
-    title: 'Garrafa Térmica Pacco Azul',
-    category: 'Acessórios',
-    location: 'Bloco 2 - Sala 204',
-    date: '24 Ago',
-    status: 'perdido',
-    imageUrl: ''
-  },
-  {
-    id: 2,
-    title: 'Chave de Carro com Chaveiro UEMG',
-    category: 'Chaves',
-    location: 'Bloco 4 - Lanchonete',
-    date: '23 Ago',
-    status: 'achado',
-    imageUrl: ''
-  },
-  {
-    id: 3,
-    title: 'Calculadora Científica Casio',
-    category: 'Eletrônicos',
-    location: 'Biblioteca',
-    date: '22 Ago',
-    status: 'perdido',
-    imageUrl: ''
-  }
-];
+import { listarItens } from '../services/itemService';
+import { listarCategorias } from '../services/categoriaService';
 
 export default function Home() {
+  const [items, setItems] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('todos');
 
-  const filteredItems = MOCK_ITEMS.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'todos' || item.status === filter;
+  // Busca itens e categorias do Firestore ao carregar a tela
+  useEffect(() => {
+    async function carregarDados() {
+      try {
+        const [dadosItens, dadosCategorias] = await Promise.all([
+          listarItens(),
+          listarCategorias()
+        ]);
+        setItems(dadosItens);
+        setCategorias(dadosCategorias);
+      } catch (error) {
+        console.error("Erro ao carregar dados do Firestore:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    carregarDados();
+  }, []);
+
+  // Converte o ID da categoria para o nome real com comparação segura
+const obterNomeCategoria = (categoriaId) => {
+  if (!categoriaId) return 'Geral';
+
+  // Se o item já tiver o nome direto (fallback)
+  if (typeof categoriaId === 'string' && !categoriaId.match(/^[a-zA-Z0-9]{15,}$/)) {
+    return categoriaId;
+  }
+
+  // Compara limpando espaços e garantindo tipo String
+  const cat = categorias.find(c => String(c.id).trim() === String(categoriaId).trim());
+  
+  return cat ? (cat.nome || cat.title || 'Geral') : 'Geral';
+};
+
+  // Formata o Timestamp exibindo apenas dia e mês (ex: "30 ago")
+  const formatarData = (item) => {
+    const data = item.dataEncontrado || item.dataCadastro || item.data;
+
+    if (data?.seconds) {
+      return new Date(data.seconds * 1000).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'short'
+      }).replace('.', '');
+    }
+
+    if (typeof data === 'string') return data;
+
+    return 'Recente';
+  };
+
+  // Lógica de filtragem
+  const filteredItems = items.filter(item => {
+    const titulo = item.titulo || item.title || '';
+    const statusItem = (item.status || '').toLowerCase();
+
+    const matchesSearch = titulo.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filter === 'todos' || statusItem === filter.toLowerCase();
+    
     return matchesSearch && matchesFilter;
   });
 
@@ -57,46 +86,69 @@ export default function Home() {
         />
       </div>
 
-      {/* Filtros Rápido (Segunda Heurística: Correspondência com o mundo real) */}
+      {/* Filtros Rápidos */}
       <div className="flex gap-2 text-xs font-medium">
         <button
           onClick={() => setFilter('todos')}
-          className={`px-3 py-1.5 rounded-lg border ${
-            filter === 'todos' ? 'bg-indigo-900 text-white border-indigo-900' : 'bg-white text-gray-600 border-gray-200'
+          className={`px-3 py-1.5 rounded-lg border transition-colors ${
+            filter === 'todos' 
+              ? 'bg-indigo-900 text-white border-indigo-900' 
+              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
           }`}
         >
           Todos
         </button>
         <button
-          onClick={() => setFilter('perdido')}
-          className={`px-3 py-1.5 rounded-lg border ${
-            filter === 'perdido' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-200'
+          onClick={() => setFilter('disponível')}
+          className={`px-3 py-1.5 rounded-lg border transition-colors ${
+            filter === 'disponível' 
+              ? 'bg-emerald-600 text-white border-emerald-600' 
+              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
           }`}
         >
-          Perdidos
+          Disponíveis
         </button>
         <button
-          onClick={() => setFilter('achado')}
-          className={`px-3 py-1.5 rounded-lg border ${
-            filter === 'achado' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'
+          onClick={() => setFilter('em análise')}
+          className={`px-3 py-1.5 rounded-lg border transition-colors ${
+            filter === 'em análise' 
+              ? 'bg-amber-600 text-white border-amber-600' 
+              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
           }`}
         >
-          Achados
+          Em Análise
         </button>
       </div>
 
-      {/* Lista de Itens */}
-      <div className="space-y-3 pt-1">
-        {filteredItems.length > 0 ? (
-          filteredItems.map(item => (
-            <ItemCard key={item.id} {...item} />
-          ))
-        ) : (
-          <div className="text-center py-8 text-gray-500 text-sm">
-            Nenhum pertença encontrada com este termo.
-          </div>
-        )}
-      </div>
+      {/* Feedback de Carregamento */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-900 mb-2" />
+          <p className="text-xs">Carregando pertences...</p>
+        </div>
+      ) : (
+        /* Lista de Itens */
+        <div className="space-y-3 pt-1">
+          {filteredItems.length > 0 ? (
+            filteredItems.map(item => (
+              <ItemCard 
+                key={item.id} 
+                id={item.id}
+                title={item.titulo || item.title}
+                category={obterNomeCategoria(item.categoriaId)}
+                location={item.localEncontrado || item.location}
+                date={formatarData(item)}
+                status={item.status || 'Disponível'}
+                imageUrl={item.fotoUrl || item.imageUrl}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500 text-sm">
+              Nenhum pertence encontrado com este termo.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
