@@ -17,7 +17,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Rotas de Autenticação (Sem a barra de navegação inferior) */}
+          {/* Rotas de Autenticação (Abertas e Sem a barra de navegação inferior) */}
           <Route path="login" element={<Login />} />
           <Route path="cadastro" element={<Cadastro />} />
 
@@ -26,8 +26,12 @@ export default function App() {
             {/* Rotas Públicas */}
             <Route index element={<Home />} />
             <Route path="search" element={<Home />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="item/:id" element={<ItemDetails />} />
+
+            {/* Rotas Protegidas - Apenas Usuários Logados */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="profile" element={<Profile />} />
+              <Route path="item/:id" element={<ItemDetails />} />
+            </Route>
 
             {/* Rotas Protegidas - Apenas Administrador */}
             <Route element={<ProtectedRoute requireAdmin={true} />}>

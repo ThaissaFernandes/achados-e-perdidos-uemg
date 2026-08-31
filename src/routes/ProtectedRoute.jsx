@@ -21,9 +21,9 @@ export default function ProtectedRoute({ requireAdmin = false }) {
   }
 
   // 2. Se o usuário não estiver autenticado, redireciona para a página de perfil/login
-  if (!usuario) {
-    return <Navigate to="/profile" replace />;
-  }
+ if (!usuario) {
+  return <Navigate to="/login" replace />;
+}
 
   // 3. Ajuste 2: Mudar de .perfil para .tipo (que é a chave usada no Firestore)
   if (requireAdmin && usuario.tipo !== 'admin') {
