@@ -7,6 +7,7 @@ export default function Cadastro() {
   const [email, setEmail] = useState('');
   const [numeroCadastro, setNumeroCadastro] = useState('');
   const [senha, setSenha] = useState('');
+  const [tipo, setTipo] = useState('usuario');
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
@@ -19,15 +20,28 @@ export default function Cadastro() {
 
     try {
       await cadastrarUsuario({
-        email,
+        email: email.trim(),
         senha,
-        nome,
-        numeroCadastro,
-        tipo: 'usuario' // Padrão inicial como usuário comum
+        nome: nome.trim(),
+        numeroCadastro: numeroCadastro.trim(),
+        tipo
       });
       navigate('/');
     } catch (err) {
-      setErro('Erro ao realizar cadastro. Verifique os dados e tente novamente.');
+      console.error("Erro detalhado do Firebase:", err);
+
+      // Tratamento específico de códigos de erro do Firebase Auth
+      if (err.code === 'auth/email-already-in-use') {
+        setErro('Este e-mail já está cadastrado. Tente realizar o login.');
+      } else if (err.code === 'auth/weak-password') {
+        setErro('A senha deve conter no mínimo 6 caracteres.');
+      } else if (err.code === 'auth/invalid-email') {
+        setErro('O formato do e-mail informado é inválido.');
+      } else if (err.code === 'permission-denied') {
+        setErro('Sem permissão no Firestore. Verifique as Regras de Segurança.');
+      } else {
+        setErro(err.message || 'Erro ao realizar cadastro. Verifique os dados e tente novamente.');
+      }
     } finally {
       setCarregando(false);
     }
@@ -39,7 +53,7 @@ export default function Cadastro() {
         <h2 className="text-lg font-bold text-gray-800 text-center">Criar Conta</h2>
 
         {erro && (
-          <div className="p-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs">
+          <div className="p-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-medium">
             {erro}
           </div>
         )}
@@ -83,6 +97,18 @@ export default function Cadastro() {
           </div>
 
           <div>
+            <label className="block text-gray-700 font-medium mb-1">Tipo de Perfil</label>
+            <select
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-600 text-gray-700"
+            >
+              <option value="usuario">Usuário Comum</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+
+          <div>
             <label className="block text-gray-700 font-medium mb-1">Senha</label>
             <input
               type="password"
@@ -97,7 +123,7 @@ export default function Cadastro() {
           <button
             type="submit"
             disabled={carregando}
-            className="w-full py-3 bg-indigo-900 text-white rounded-xl font-semibold hover:bg-indigo-800 transition"
+            className="w-full py-3 bg-indigo-900 text-white rounded-xl font-semibold hover:bg-indigo-800 transition disabled:opacity-50"
           >
             {carregando ? 'Cadastrando...' : 'Cadastrar'}
           </button>

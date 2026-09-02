@@ -16,9 +16,13 @@ export default function Login() {
     setCarregando(true);
 
     try {
-      await realizarLogin(email, senha);
+      // Autentica no Firebase e carrega o perfil do Firestore
+      await realizarLogin(email.trim(), senha);
+      
+      // Direciona todos os usuários para a Home unificada ('/')
       navigate('/');
     } catch (err) {
+      console.error("Erro ao autenticar:", err);
       setErro('E-mail ou senha incorretos.');
     } finally {
       setCarregando(false);
@@ -31,7 +35,7 @@ export default function Login() {
         <h2 className="text-lg font-bold text-gray-800 text-center">Entrar no Sistema</h2>
 
         {erro && (
-          <div className="p-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs">
+          <div className="p-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-medium">
             {erro}
           </div>
         )}
@@ -42,7 +46,7 @@ export default function Login() {
             <input
               type="email"
               required
-              placeholder="Digite seu e-mail"
+              placeholder="seu.nome@discente.uemg.br"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-600"
@@ -64,7 +68,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={carregando}
-            className="w-full py-3 bg-indigo-900 text-white rounded-xl font-semibold hover:bg-indigo-800 transition"
+            className="w-full py-3 bg-indigo-900 text-white rounded-xl font-semibold hover:bg-indigo-800 transition disabled:opacity-50"
           >
             {carregando ? 'Entrando...' : 'Entrar'}
           </button>
