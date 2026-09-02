@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Busca os dados complementares do perfil no Firestore
+          // Busca os dados complementares do perfil na coleção 'usuarios'
           const docRef = doc(db, 'usuarios', firebaseUser.uid);
           const docSnap = await getDoc(docRef);
 
@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }) => {
               ...docSnap.data() // traz nome, numeroCadastro, tipo, etc.
             });
           } else {
-            // Caso o documento no Firestore ainda não exista
             setUsuario({
               uid: firebaseUser.uid,
               email: firebaseUser.email,
@@ -47,12 +46,11 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ usuario, loading, eAdmin: usuario?.tipo === 'admin' }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook personalizado para usar o AuthContext de forma simples nas páginas
 export const useAuth = () => {
   return useContext(AuthContext);
 };
