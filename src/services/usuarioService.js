@@ -18,10 +18,19 @@ export const cadastrarUsuario = async ({ email, senha, nome, numeroCadastro, tip
   return userCredential.user;
 };
 
-// Login
+// Login (Ajustado para retornar o perfil completo do Firestore com o "tipo")
 export const realizarLogin = async (email, senha) => {
   const userCredential = await signInWithEmailAndPassword(auth, email, senha);
-  return userCredential.user;
+  const uid = userCredential.user.uid;
+
+  // Busca os dados cadastrados na coleção 'usuarios' (incluindo tipo, nome, etc)
+  const perfil = await buscarPerfilUsuario(uid);
+
+  return {
+    uid,
+    email: userCredential.user.email,
+    ...perfil
+  };
 };
 
 // Logout

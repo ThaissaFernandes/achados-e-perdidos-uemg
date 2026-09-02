@@ -21,7 +21,7 @@ export const cadastrarItem = async (dadosItem) => {
       localEncontrado: dadosItem.localEncontrado,
       categoriaId: dadosItem.categoriaId,
       fotoUrl: dadosItem.fotoUrl || '',
-      status: 'Disponível',
+      status: dadosItem.status || 'Disponível',
       dataRegistro: serverTimestamp(),
     });
     return docRef.id;
@@ -30,6 +30,9 @@ export const cadastrarItem = async (dadosItem) => {
     throw error;
   }
 };
+
+// Exporta também com o nome 'criarItem' para compatibilidade com o RegistrarItem.jsx
+export const criarItem = cadastrarItem;
 
 // Mapeia o método buscarPorFiltro() do Diagrama de Classes
 export const listarItens = async (categoriaId = null, local = null) => {
