@@ -18,8 +18,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* Rotas de Autenticação (Abertas e Sem a barra de navegação inferior) */}
-          <Route path="login" element={<Login />} />
-          <Route path="cadastro" element={<Cadastro />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/cadastro" element={<Cadastro />} />
 
           {/* Layout principal contendo o Header e o Bottom Navigation */}
           <Route path="/" element={<MobileLayout />}>
@@ -29,13 +29,13 @@ export default function App() {
 
             {/* Rotas Protegidas - Apenas Usuários Logados */}
             <Route element={<ProtectedRoute />}>
-              <Route path="profile" element={<Profile />} />
+              <Route path="perfil" element={<Profile />} />
               <Route path="item/:id" element={<ItemDetails />} />
             </Route>
 
             {/* Rotas Protegidas - Apenas Administrador */}
             <Route element={<ProtectedRoute requireAdmin={true} />}>
-              <Route path="register" element={<RegistrarItem />} />
+              <Route path="registrar-item" element={<RegistrarItem />} />
             </Route>
           </Route>
         </Routes>
