@@ -4,7 +4,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 const localCollectionRef = collection(db, 'locais');
 
 export const listarLocaisAtivos = async () => {
-  const q = query(localCollectionRef, where("ativo", "==", true));
+  const q = query(localCollectionRef, where("status", "==", true));
   const querySnapshot = await getDocs(q);
   
   return querySnapshot.docs.map(doc => ({

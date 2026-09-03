@@ -1,4 +1,4 @@
-import { db } from '../config/firebase';
+import { db, storage } from '../config/firebase';
 import { 
   collection, 
   addDoc, 
@@ -9,8 +9,24 @@ import {
   where, 
   serverTimestamp 
 } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const itemCollectionRef = collection(db, 'itens');
+
+// Faz o upload da foto diretamente no Firebase Storage e retorna a URL permanente
+export const uploadFotoItem = async (file) => {
+  if (!file) return '';
+  try {
+    const fileName = `${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, `itens/${fileName}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+  } catch (error) {
+    console.error("Erro ao fazer upload da imagem:", error);
+    throw error;
+  }
+};
 
 // Mapeia o método cadastrar() do Diagrama de Classes
 export const cadastrarItem = async (dadosItem) => {
@@ -21,8 +37,9 @@ export const cadastrarItem = async (dadosItem) => {
       localEncontrado: dadosItem.localEncontrado,
       categoriaId: dadosItem.categoriaId,
       fotoUrl: dadosItem.fotoUrl || '',
-      status: dadosItem.status || 'Disponível',
-      dataRegistro: serverTimestamp(),
+      status: (dadosItem.status || 'disponível').toLowerCase(),
+      dataCadastro: serverTimestamp(),
+      criadoPor: dadosItem.criadoPor || 'admin'
     });
     return docRef.id;
   } catch (error) {
@@ -31,7 +48,7 @@ export const cadastrarItem = async (dadosItem) => {
   }
 };
 
-// Exporta também com o nome 'criarItem' para compatibilidade com o RegistrarItem.jsx
+// Alias para compatibilidade com o RegistrarItem.jsx
 export const criarItem = cadastrarItem;
 
 // Mapeia o método buscarPorFiltro() do Diagrama de Classes
@@ -53,7 +70,7 @@ export const listarItens = async (categoriaId = null, local = null) => {
 export const atualizarStatusItem = async (itemId, novoStatus) => {
   try {
     const itemRef = doc(db, 'itens', itemId);
-    await updateDoc(itemRef, { status: novoStatus });
+    await updateDoc(itemRef, { status: novoStatus.toLowerCase() });
   } catch (error) {
     console.error("Erro ao atualizar status do item:", error);
     throw error;

@@ -15,9 +15,9 @@ export const listarCategorias = async () => {
 };
 
 // Função auxiliar para cadastrar categorias iniciais (ex: Chaves, Carteira, Eletrônicos)
-export const cadastrarCategoria = async (nome, icone) => {
+export const cadastrarCategoria = async (name, icone) => {
   try {
-    await addDoc(categoriaCollectionRef, { nome, icone });
+    await addDoc(categoriaCollectionRef, { name, icone });
   } catch (error) {
     console.error("Erro ao cadastrar categoria:", error);
   }
