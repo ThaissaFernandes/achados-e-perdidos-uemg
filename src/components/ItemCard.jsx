@@ -1,21 +1,24 @@
-import { MapPin, Calendar, Tag } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, Calendar, Tag, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ItemCard({ id, title, category, location, date, status, imageUrl }) {
-  // Trata os diferentes status do Firestore para definir as cores da badge
+  const [imgError, setImgError] = useState(false);
+
+  // Trata os status do Firestore para definir a paleta visual (Nielsen - Visibilidade do Estado)
   const getStatusStyle = (st) => {
-    const statusLower = (st || '').toLowerCase();
+    const statusLower = (st || '').toLowerCase().trim();
     
     if (statusLower === 'disponível' || statusLower === 'disponivel') {
-      return 'bg-emerald-100 text-emerald-700';
+      return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
     }
     if (statusLower === 'em análise' || statusLower === 'em analise') {
-      return 'bg-amber-100 text-amber-700';
+      return 'bg-amber-100 text-amber-700 border border-amber-200';
     }
     if (statusLower === 'devolvido') {
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-blue-100 text-blue-700 border border-blue-200';
     }
-    return 'bg-gray-100 text-gray-700';
+    return 'bg-gray-100 text-gray-700 border border-gray-200';
   };
 
   return (
@@ -23,12 +26,19 @@ export default function ItemCard({ id, title, category, location, date, status, 
       to={`/item/${id}`}
       className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex gap-3 items-center hover:shadow-md transition-shadow cursor-pointer block"
     >
-      {/* Imagem do Item ou Placeholder */}
-      <div className="w-20 h-20 rounded-xl bg-gray-100 shrink-0 overflow-hidden flex items-center justify-center">
-        {imageUrl ? (
-          <img src={imageUrl} alt={title || 'Item'} className="w-full h-full object-cover" />
+      {/* Imagem do Item com Fallback de foto quebrada/ausente */}
+      <div className="w-20 h-20 rounded-xl bg-gray-50 shrink-0 overflow-hidden flex items-center justify-center border border-gray-100 relative">
+        {imageUrl && !imgError ? (
+          <img 
+            src={imageUrl} 
+            alt={title || 'Item'} 
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover" 
+          />
         ) : (
-          <Tag className="text-gray-400" size={28} />
+          <div className="flex flex-col items-center justify-center text-gray-400 p-2">
+            <Package size={26} className="text-indigo-900/40" />
+          </div>
         )}
       </div>
 
@@ -44,13 +54,14 @@ export default function ItemCard({ id, title, category, location, date, status, 
         </div>
 
         <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-          <Tag size={12} /> {category || 'Geral'}
+          <Tag size={12} className="text-gray-400" /> 
+          <span className="truncate">{category || 'Geral'}</span>
         </p>
 
         <div className="flex items-center gap-3 text-[11px] text-gray-500">
           <span className="flex items-center gap-1 truncate">
-            <MapPin size={12} className="text-indigo-600 shrink-0" />
-            {location || 'Local não informado'}
+            <MapPin size={12} className="text-indigo-900 shrink-0" />
+            <span className="truncate">{location || 'Local não informado'}</span>
           </span>
           <span className="flex items-center gap-1 shrink-0">
             <Calendar size={12} />

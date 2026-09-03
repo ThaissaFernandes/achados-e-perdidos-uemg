@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, MapPin, Tag, FileText, CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react';
-import { criarItem } from '../services/itemService';
+import { criarItem, uploadFotoItem } from '../services/itemService';
 import { listarCategorias } from '../services/categoriaService';
 import { listarLocaisAtivos } from '../services/localService';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,10 @@ export default function RegistrarItem() {
 
   const [categorias, setCategorias] = useState([]);
   const [locais, setLocais] = useState([]);
+
+  // Guarda o arquivo original (File) para o upload no Storage
+  const [fileObject, setFileObject] = useState(null);
+
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -25,7 +29,7 @@ export default function RegistrarItem() {
   const [submitted, setSubmitted] = useState(false);
   const [erro, setErro] = useState('');
 
-  // Carrega categorias e locais do Firestore
+  // Carrega e ordena categorias e locais do Firestore
   useEffect(() => {
     async function carregarOpcoes() {
       try {
@@ -33,20 +37,37 @@ export default function RegistrarItem() {
           listarCategorias(),
           listarLocaisAtivos()
         ]);
-        setCategorias(dadosCategorias || []);
-        setLocais(dadosLocais || []);
+
+        // Ordenação Alfabética das Categorias
+        const catOrdenadas = (dadosCategorias || []).sort((a, b) => {
+          const nomeA = a.name || a.nome || a.title || '';
+          const nomeB = b.name || b.nome || b.title || '';
+          return nomeA.localeCompare(nomeB, 'pt-BR', { numeric: true });
+        });
+
+        // Ordenação Alfabética/Numérica dos Locais
+        const locOrdenados = (dadosLocais || []).sort((a, b) => {
+          const nomeA = a.name || a.nome || a.title || '';
+          const nomeB = b.name || b.nome || b.title || '';
+          return nomeA.localeCompare(nomeB, 'pt-BR', { numeric: true });
+        });
+
+        setCategorias(catOrdenadas);
+        setLocais(locOrdenados);
       } catch (err) {
-        console.error("Erro ao carregar selects:", err);
+        console.error("Erro ao carregar dados do banco:", err);
       }
     }
     carregarOpcoes();
   }, []);
 
+  // Captura o arquivo da galeria/computador e cria a preview
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setFormData((prev) => ({ ...prev, imagePreview: imageUrl }));
+      setFileObject(file); // Salva o arquivo bruto
+      const previewUrl = URL.createObjectURL(file);
+      setFormData((prev) => ({ ...prev, imagePreview: previewUrl }));
     }
   };
 
@@ -56,13 +77,21 @@ export default function RegistrarItem() {
     setCarregando(true);
 
     try {
+      let photoUrl = '';
+
+      // 1. Envia a foto da galeria/computador para o Firebase Storage se houver arquivo anexado
+      if (fileObject) {
+        photoUrl = await uploadFotoItem(fileObject);
+      }
+
+      // 2. Grava no Firestore usando a URL pública permanente obtida do Storage
       await criarItem({
         titulo: formData.title.trim(),
         categoriaId: formData.category,
         localEncontrado: formData.location,
         descricao: formData.description.trim(),
         status: formData.status,
-        fotoUrl: formData.imagePreview || '',
+        fotoUrl: photoUrl,
         criadoPor: usuario?.uid || 'admin',
         dataCadastro: new Date()
       });
@@ -185,13 +214,18 @@ export default function RegistrarItem() {
             className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl outline-none focus:border-indigo-900 text-gray-700"
           >
             <option value="">Selecione uma categoria...</option>
-            {categorias.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.nome || cat.title}</option>
-            ))}
+            {categorias.map((cat) => {
+              const nomeCat = cat.name || cat.nome || cat.title;
+              return (
+                <option key={cat.id} value={nomeCat}>
+                  {nomeCat}
+                </option>
+              );
+            })}
           </select>
         </div>
 
-        {/* Local */}
+        {/* Local Encontrado */}
         <div className="space-y-1">
           <label className="font-semibold text-gray-700">Local Encontrado</label>
           <div className="relative">
@@ -203,9 +237,14 @@ export default function RegistrarItem() {
               className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl outline-none focus:border-indigo-900 text-gray-700"
             >
               <option value="">Selecione o local no campus...</option>
-              {locais.map((loc) => (
-                <option key={loc.id} value={loc.nome}>{loc.nome}</option>
-              ))}
+              {locais.map((loc) => {
+                const nomeLocal = loc.name || loc.nome || loc.title;
+                return (
+                  <option key={loc.id} value={nomeLocal}>
+                    {nomeLocal}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -234,7 +273,7 @@ export default function RegistrarItem() {
           {carregando ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              <span>Salvando no Sistema...</span>
+              <span>Enviando foto e salvando...</span>
             </>
           ) : (
             'Confirmar e Publicar Pertence'
